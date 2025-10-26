@@ -45,7 +45,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-center relative">
-      <h1 className="text-4xl font-extrabold mb-6">Welcome to BME Frontend</h1>
+      <h1 className="text-4xl font-extrabold mb-6">Welcome to AI.V</h1>
 
       <div className="space-x-4">
         <button

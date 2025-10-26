@@ -13,11 +13,12 @@ export default function RecordVitalsStep5() {
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const API_BASE = "http://192.168.8.167:8000";
   const qrUrl = `${API_BASE}/api/persondetail/${person_id}`;
 
-  // === Trigger AI Analysis ===
+  // === AI ANALYSIS ===
   const handleAiAnalysis = async () => {
     setLoading(true);
     setMessage("🤖 Analyzing your health data...");
@@ -38,9 +39,30 @@ export default function RecordVitalsStep5() {
     }
   };
 
-  // === Done Button ===
-  const handleDone = () => {
-    navigate("/"); // You can adjust this to your home or dashboard
+  // === DONE (Send Email + Redirect) ===
+  const handleDone = async () => {
+    const email_username = "vosotrosandteam@gmail.com";
+    const email_password = "xrgmcdpoxqlkuoks"; // 🔒 test only — never hardcode in production!
+
+    setSendingEmail(true);
+    setMessage("📧 Sending summary email... Please wait.");
+
+    try {
+      await axios.post(
+        `${API_BASE}/api/send/email/${email_username}/${email_password}/${person_id}`
+      );
+
+      setMessage("✅ Thank you for using Ai.V! Redirecting to home in 3..2..1..");
+
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+      setMessage("❌ Failed to send email. Please try again.");
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   return (
@@ -63,34 +85,13 @@ export default function RecordVitalsStep5() {
         <div className="bg-white shadow-md rounded-lg p-6 text-left">
           <h2 className="text-xl font-semibold mb-3">📊 Final Vitals Summary</h2>
           <ul className="space-y-2 text-gray-700">
-            <li>
-              <strong>SpO₂:</strong>{" "}
-              {vitals.spo2 ? `${vitals.spo2.toFixed(1)}%` : "Not recorded"}
-            </li>
-            <li>
-              <strong>Blood Pulse:</strong>{" "}
-              {vitals.bpm ? `${vitals.bpm} BPM` : "Not recorded"}
-            </li>
-            <li>
-              <strong>Temperature:</strong>{" "}
-              {vitals.temperature ? `${vitals.temperature.toFixed(2)} °C` : "Not recorded"}
-            </li>
-            <li>
-              <strong>Height:</strong>{" "}
-              {vitals.height ? `${vitals.height.toFixed(2)} ft` : "Not recorded"}
-            </li>
-            <li>
-              <strong>Weight:</strong>{" "}
-              {vitals.weight ? `${vitals.weight} kg` : "Not recorded"}
-            </li>
-            <li>
-              <strong>BMI:</strong>{" "}
-              {vitals.bmi ? `${vitals.bmi.toFixed(2)}` : "Not recorded"}
-            </li>
-            <li>
-              <strong>BMR:</strong>{" "}
-              {vitals.bmr ? `${vitals.bmr.toFixed(2)} kcal/day` : "Not recorded"}
-            </li>
+            <li><strong>SpO₂:</strong> {vitals.spo2 ? `${vitals.spo2.toFixed(1)}%` : "Not recorded"}</li>
+            <li><strong>Blood Pulse:</strong> {vitals.bpm ? `${vitals.bpm} BPM` : "Not recorded"}</li>
+            <li><strong>Temperature:</strong> {vitals.temperature ? `${vitals.temperature.toFixed(2)} °C` : "Not recorded"}</li>
+            <li><strong>Height:</strong> {vitals.height ? `${vitals.height.toFixed(2)} ft` : "Not recorded"}</li>
+            <li><strong>Weight:</strong> {vitals.weight ? `${vitals.weight} kg` : "Not recorded"}</li>
+            <li><strong>BMI:</strong> {vitals.bmi ? `${vitals.bmi.toFixed(2)}` : "Not recorded"}</li>
+            <li><strong>BMR:</strong> {vitals.bmr ? `${vitals.bmr.toFixed(2)} kcal/day` : "Not recorded"}</li>
           </ul>
         </div>
 
@@ -106,10 +107,16 @@ export default function RecordVitalsStep5() {
       <div className="flex flex-wrap justify-center gap-4 mt-8">
         <button
           onClick={handleDone}
-          className="px-6 py-3 rounded-md text-lg bg-gray-700 hover:bg-gray-800 text-white transition"
+          disabled={sendingEmail}
+          className={`px-6 py-3 rounded-md text-lg transition ${
+            sendingEmail
+              ? "bg-gray-400 cursor-not-allowed text-white"
+              : "bg-green-600 hover:bg-green-700 text-white"
+          }`}
         >
-          ✅ Done
+          ✅ {sendingEmail ? "Sending..." : "Done"}
         </button>
+
         <button
           onClick={handleAiAnalysis}
           disabled={loading}
