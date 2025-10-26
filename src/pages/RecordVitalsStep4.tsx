@@ -89,7 +89,7 @@ export default function RecordVitalsStep4() {
       <div className="bg-white shadow-md rounded-lg p-6 text-left w-full max-w-md mb-6">
         <h2 className="text-xl font-semibold mb-3">📋 Instructions</h2>
         <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>Stand on the weight scale.</li>
+          <li>WALA PA TO FILLER LANG TO WALA PAKO SENSOR (Stand on the weight scale).</li>
           <li>Wait until the measurement completes.</li>
           <li>Click <strong>Record Weight</strong> below to simulate measurement.</li>
         </ol>
