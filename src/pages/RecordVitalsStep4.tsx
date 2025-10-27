@@ -1,6 +1,7 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 export default function RecordVitalsStep4() {
   const { person_id } = useParams();
@@ -14,12 +15,12 @@ export default function RecordVitalsStep4() {
 
   const API_BASE = "http://192.168.8.112:8000";
 
-  // === Record weight (mock for now) ===
+  // === Simulated record ===
   const handleRecordWeight = () => {
     setStatus("recording");
     setMessage("⚖️ Measuring weight...");
     setTimeout(() => {
-      setWeight(75); // Mock data
+      setWeight(75); // mock data
       setStatus("done");
       setMessage("✅ Weight recorded successfully!");
     }, 2000);
@@ -28,15 +29,10 @@ export default function RecordVitalsStep4() {
   // === Compute BMI and BMR ===
   const computeMetrics = () => {
     if (!prevVitals.height || !weight) return { bmi: null, bmr: null };
-
     const height_m = prevVitals.height * 0.3048;
     const height_cm = height_m * 100;
-
     const bmi = weight / (height_m * height_m);
-
-    // Simple BMR formula (Mifflin-St Jeor, male, age = 25 for now)
     const bmr = 66 + 13.7 * weight + 5 * height_cm - 6.8 * 25;
-
     return { bmi, bmr };
   };
 
@@ -46,9 +42,7 @@ export default function RecordVitalsStep4() {
       alert("Please record height and weight first!");
       return;
     }
-
     const { bmi, bmr } = computeMetrics();
-
     if (!bmi || !bmr) {
       alert("Failed to compute BMI/BMR. Please try again.");
       return;
@@ -60,7 +54,6 @@ export default function RecordVitalsStep4() {
         bmr: parseFloat(bmr.toFixed(2)),
         bmi: parseFloat(bmi.toFixed(2)),
       });
-
       setMessage("✅ Health metrics updated successfully!");
       navigate(`/record_vitals_step5/${person_id}`, {
         state: { ...prevVitals, weight, bmi, bmr },
@@ -73,82 +66,145 @@ export default function RecordVitalsStep4() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 text-center p-6">
-      <h1 className="text-3xl font-bold mb-4 text-blue-700">⚖️ Record Weight</h1>
-      <p className="text-gray-700 mb-6">
-        Recording weight for <strong>{person_id}</strong>
-      </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] p-6">
+              <div className="absolute top-10 right-10">
+    <Link
+      to="/"
+      className=" text-xl inline-flex items-center gap-2  text-white font-semibold px-10 py-2 rounded-full shadow-md hover:brightness-110 transition-all"
+    >
+      🏠
+    </Link>
+  </div>
+  {/* === Back Button (Top Left) === */}
+<button
+  onClick={() => navigate(-1)}
+  className="absolute top-10 left-10 px-6 py-3 rounded-full text-lg font-semibold bg-gray-200 text-[#1C7DA6] hover:bg-gray-300 transition-all shadow-sm"
+>
+  ⬅️ Back
+</button>
+      {/* === Card === */}
+      <div className="w-[900px] h-[1700px] rounded-[32px] bg-white shadow-2xl overflow-hidden text-center px-16 py-12">
+        {/* === Header === */}
+        <h1 className="text-[56px] font-extrabold text-[#1C7DA6] leading-tight tracking-tight mb-4">
+          ⚖️ Record Weight
+        </h1>
+        <p className="text-xl text-[#3F3F3F]/80 mb-10">
+          Recording weight for{" "}
+          <span className="font-semibold text-[#1C7DA6]">{person_id}</span>
+        </p>
 
-      {/* === Progress Bar === */}
-      <div className="w-full max-w-md bg-gray-300 rounded-full h-3 mb-8">
-        <div className="bg-blue-600 h-3 rounded-full" style={{ width: "80%" }}></div>
-      </div>
-      <p className="text-sm text-gray-600 mb-6">Step 4 of 5 — Record Weight</p>
+        {/* === Step Bar === */}
+        <div className="flex justify-center items-center gap-8 mb-10">
+          {[
+            { icon: "🩸", label: "Vitals" },
+            { icon: "🌡️", label: "Temp" },
+            { icon: "📏", label: "Height" },
+            { icon: "⚖️", label: "Weight" },
+            { icon: "📄", label: "Summary" },
+          ].map((step, index) => (
+            <div key={index} className="flex items-center">
+              <div
+                className={`flex items-center justify-center w-20 h-20 rounded-full border-4 ${
+                  index <= 3
+                    ? "border-[#1C7DA6] bg-[#EAF8FB] text-[#1C7DA6]"
+                    : "border-[#D7E7EB] bg-white text-[#D7E7EB]"
+                } transition-all duration-300`}
+              >
+                <span className="text-2xl">{step.icon}</span>
+              </div>
+              {index < 4 && (
+                <div
+                  className={`w-20 h-[4px] ${
+                    index < 3 ? "bg-[#1C7DA6]" : "bg-[#D7E7EB]"
+                  }`}
+                ></div>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* === Instructions === */}
-      <div className="bg-white shadow-md rounded-lg p-6 text-left w-full max-w-md mb-6">
-        <h2 className="text-xl font-semibold mb-3">📋 Instructions</h2>
-        <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>WALA PA TO FILLER LANG TO WALA PAKO SENSOR (Stand on the weight scale).</li>
-          <li>Wait until the measurement completes.</li>
-          <li>Click <strong>Record Weight</strong> below to simulate measurement.</li>
-        </ol>
-      </div>
+        <p className="text-lg text-[#3F3F3F]/70 mb-10">
+          Step 4 of 5 — Record Weight
+        </p>
 
-      {/* === Status Message === */}
-      {message && <div className="mb-4 text-lg font-medium text-gray-800">{message}</div>}
+        {/* === Instructions === */}
+        <div className="mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 mb-10">
+          <h2 className="text-2xl font-bold text-[#1C7DA6] mb-4">📋 Instructions</h2>
+          <ol className="list-decimal list-inside space-y-2 text-[20px] text-[#3F3F3F]">
+            <li>Stand on the weight scale evenly with both feet.</li>
+            <li>Wait until the measurement completes.</li>
+            <li>Click <strong>Record Weight</strong> to simulate measurement.</li>
+          </ol>
+        </div>
 
-      {/* === Record Button === */}
-      <button
-        onClick={handleRecordWeight}
-        disabled={status === "recording"}
-        className={`px-6 py-3 rounded-md text-lg transition ${
-          status === "recording"
-            ? "bg-gray-400 cursor-not-allowed text-white"
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        }`}
-      >
-        ⚖️ {status === "recording" ? "Recording..." : "Record Weight"}
-      </button>
+        {/* === Status Message === */}
+        {message && (
+          <div className="text-[22px] font-semibold text-[#3F3F3F] mb-10">
+            {message}
+          </div>
+        )}
 
-      {/* === Vitals Summary === */}
-      <div className="mt-8 bg-white shadow-md rounded-lg p-6 w-full max-w-md text-left">
-        <h3 className="text-xl font-semibold mb-3">📊 Vitals Summary</h3>
-        <ul className="space-y-2 text-gray-700">
-          <li>
-            <strong>SpO₂:</strong>{" "}
-            {prevVitals.spo2 ? `${prevVitals.spo2.toFixed(1)}%` : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Blood Pulse:</strong>{" "}
-            {prevVitals.bpm ? `${prevVitals.bpm} BPM` : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Temp:</strong>{" "}
-            {prevVitals.temperature
-              ? `${prevVitals.temperature.toFixed(2)} °C`
-              : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Height:</strong>{" "}
-            {prevVitals.height ? `${prevVitals.height.toFixed(2)} ft` : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Weight:</strong>{" "}
-            {weight ? `${weight} kg` : "Not yet recorded"}
-          </li>
-        </ul>
-      </div>
-
-      {/* === Proceed Button === */}
-      {status === "done" && (
+        {/* === Record Button === */}
         <button
-          onClick={handleProceed}
-          className="mt-6 px-6 py-3 rounded-md text-lg bg-green-600 hover:bg-green-700 text-white transition"
+          onClick={handleRecordWeight}
+          disabled={status === "recording"}
+          className={`inline-flex w-[700px] min-h-[96px] items-center justify-center gap-5 rounded-full px-16 py-8 text-[28px] font-extrabold text-white shadow-md transition-all ${
+            status === "recording"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[#1C7DA6] hover:brightness-110"
+          }`}
         >
-          ➡️ Proceed to Step 5: Results Summary
+          ⚖️ {status === "recording" ? "Recording..." : "Record Weight"}
         </button>
-      )}
+
+        {/* === Summary === */}
+        <div className="mt-14 mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 text-[22px] text-[#3F3F3F]">
+          <h3 className="text-2xl font-bold text-[#1C7DA6] mb-4">📊 Vitals Summary</h3>
+          <ul className="space-y-3">
+            <li>
+              <strong>SpO₂:</strong>{" "}
+              {prevVitals.spo2
+                ? `${prevVitals.spo2.toFixed(1)}%`
+                : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Blood Pulse:</strong>{" "}
+              {prevVitals.bpm ? `${prevVitals.bpm} BPM` : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Temperature:</strong>{" "}
+              {prevVitals.temperature
+                ? `${prevVitals.temperature.toFixed(2)} °C`
+                : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Height:</strong>{" "}
+              {prevVitals.height
+                ? `${prevVitals.height.toFixed(2)} ft`
+                : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Weight:</strong>{" "}
+              {weight ? `${weight} kg` : "Not yet recorded"}
+            </li>
+          </ul>
+        </div>
+
+        {/* === Proceed Button === */}
+        {status === "done" && (
+          <button
+            onClick={handleProceed}
+            className="mt-14 inline-flex w-[700px] min-h-[96px] items-center justify-center gap-5 rounded-full px-16 py-8 text-[28px] font-extrabold text-white shadow-md transition-all bg-green-600 hover:bg-green-700"
+          >
+            ➡️ Proceed to Step 5: Results Summary
+          </button>
+        )}
+
+        {/* === Footer === */}
+        <p className="mt-14 text-[18px] text-[#3F3F3F]/50">
+          AI.V Health Monitor · 2025
+        </p>
+      </div>
     </div>
   );
 }

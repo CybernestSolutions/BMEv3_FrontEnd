@@ -2,58 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background: linear-gradient(180deg, #eaf6ff 0%, #d1f4f7 100%);
-  font-family: "Inter", "Montserrat", sans-serif;
+@import "tailwindcss";
+
+:root{
+  --brand:     #1C7DA6; /* main */
+  --ink:       #3F3F3F; /* text */
+  --secondary: #CFF9FF; /* accent surface */
+  --bg:        #EAF7F7; /* app background */
+  --on-brand:  #ffffff; /* text on brand */
+  --ring:      color-mix(in srgb, var(--brand) 70%, transparent);
 }
 
-/* Card styling */
-.home-card {
-  box-shadow: 0 20px 40px rgba(0, 100, 200, 0.15);
-  border-radius: 28px;
-  overflow: hidden;
-  backdrop-filter: blur(6px);
-  transition: none !important;
+@layer base{
+  html,body,#root{ height:100% }
+  body{
+    font-family:"Montserrat", sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    @apply text-center antialiased;
+    margin:0;
+  }
+  :focus-visible{ outline:2px solid var(--ring); outline-offset:2px; }
 }
 
-/* Buttons */
-button {
-  transition: all 0.3s ease;
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Responsive for portrait 1080x1920 */
-@media screen and (max-width: 1080px) and (orientation: portrait) {
-  .home-card {
-    max-width: 470px;
-    transform: scale(1.05);
-  }
-
-  .home-card img {
-    height: 400px;
-  }
-
-  .home-card h1 {
-    font-size: 1.9rem;
-  }
-
-  button {
-    font-size: 1.1rem;
-    padding: 1rem;
-  }
-}
+.kiosk{ width:1080px; height:1920px; background:#fff; overflow:hidden; }
+.kiosk-wrap{ min-height:100vh; min-width:100vw; display:grid; place-items:center; }

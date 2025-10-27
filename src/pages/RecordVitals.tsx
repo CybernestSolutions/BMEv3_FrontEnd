@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+
 
 export default function RecordVitals() {
   const { person_id } = useParams();
@@ -39,18 +41,13 @@ export default function RecordVitals() {
     setMessage("🔄 Reading SpO₂ and Pulse... Please stay still...");
 
     try {
-      // ✅ Updated API format
       const response = await axios.get(
         `${API_BASE}/api/sensors/max30102/read/${person_id}?duration=5`
       );
-
-      // ✅ New response structure
       const result = response.data;
       setSpo2(result.spo2 ?? null);
       setBpm(result.bpm ?? null);
       setStatus("done");
-
-      // ✅ Show backend message if available
       setMessage(result.message || "✅ Measurement completed successfully!");
     } catch (error) {
       console.error(error);
@@ -66,90 +63,140 @@ export default function RecordVitals() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 text-center p-6">
-      <h1 className="text-3xl font-bold mb-4 text-blue-700">🩺 Record Vital Signs</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] p-6">
+      {/* === Main Card === */}
+              <div className="absolute top-10 right-10">
+    <Link
+      to="/"
+      className=" text-xl inline-flex items-center gap-2  text-white font-semibold px-10 py-2 rounded-full shadow-md hover:brightness-110 transition-all"
+    >
+      🏠
+    </Link>
+  </div>
+      <div className="w-[900px] h-[1700px] rounded-[32px] bg-white shadow-2xl overflow-hidden text-center px-16 py-12">
+        {/* === Header === */}
+        <h1 className="text-[56px] font-extrabold text-[#1C7DA6] leading-tight tracking-tight mb-4">
+          🩺 Record Vital Signs
+        </h1>
+        <p className="text-xl text-[#3F3F3F]/80 mb-10">
+          Recording vitals for{" "}
+          <span className="font-semibold text-[#1C7DA6]">{person_id}</span>
+        </p>
 
-      <p className="text-gray-700 mb-6">
-        Recording vitals for <strong>{person_id}</strong>
-      </p>
+        {/* === Step Progress Bar === */}
+        <div className="flex justify-center items-center gap-8 mb-10">
+          {[
+            { icon: "🩸", label: "Vitals" },
+            { icon: "💓", label: "Heart" },
+            { icon: "🌡️", label: "Temp" },
+            { icon: "✏️", label: "Details" },
+            { icon: "📄", label: "Summary" },
+          ].map((step, index) => (
+            <div key={index} className="flex items-center">
+              {/* Step circle */}
+              <div
+                className={`flex flex-col items-center justify-center w-20 h-20 rounded-full border-4 ${
+                  index === 0
+                    ? "border-[#1C7DA6] bg-[#EAF8FB] text-[#1C7DA6]"
+                    : "border-[#D7E7EB] bg-white text-[#D7E7EB]"
+                } transition-all duration-300`}
+              >
+                <span className="text-2xl">{step.icon}</span>
+              </div>
 
-      {/* Progress bar */}
-      <div className="w-full max-w-md bg-gray-300 rounded-full h-3 mb-8">
-        <div
-          className="bg-blue-600 h-3 rounded-full"
-          style={{ width: "20%" }}
-        ></div>
-      </div>
-      <p className="text-sm text-gray-600 mb-6">
-        Step 1 of 5 — Record SpO₂ and Blood Pulse
-      </p>
-
-      {/* Instructions */}
-      <div className="bg-white shadow-md rounded-lg p-6 text-left w-full max-w-md mb-6">
-        <h2 className="text-xl font-semibold mb-3">📋 Instructions</h2>
-        <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>Click the <strong>Record</strong> button below.</li>
-          <li>Place your index finger gently on the pulse sensor.</li>
-          <li>Stay still until the results appear on screen.</li>
-        </ol>
-      </div>
-
-      {/* Status message */}
-      {status !== "idle" && (
-        <div className="mb-4 text-lg font-medium text-gray-800">
-          {message}{" "}
-          {countdown !== null && (
-            <span className="text-blue-600 font-bold">{countdown}</span>
-          )}
+              {/* Connecting line (except after last) */}
+              {index < 4 && (
+                <div
+                  className={`w-20 h-[4px] ${
+                    index === 0 ? "bg-[#1C7DA6]" : "bg-[#D7E7EB]"
+                  }`}
+                ></div>
+              )}
+            </div>
+          ))}
         </div>
-      )}
 
-      {/* Record button */}
-      <button
-        onClick={handleRecord}
-        disabled={status === "recording" || status === "countdown"}
-        className={`px-6 py-3 rounded-md text-lg transition ${
-          status === "recording" || status === "countdown"
-            ? "bg-gray-400 cursor-not-allowed text-white"
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        }`}
-      >
-        🔴 {status === "recording" ? "Recording..." : "Record SpO₂ and Blood Pulse"}
-      </button>
+        <p className="text-lg text-[#3F3F3F]/70 mb-10">
+          Step 1 of 5 — Record SpO₂ and Blood Pulse
+        </p>
 
-      {/* Vitals summary */}
-      <div className="mt-8 bg-white shadow-md rounded-lg p-6 w-full max-w-md text-left">
-        <h3 className="text-xl font-semibold mb-3">📊 Vitals Summary</h3>
-        <ul className="space-y-2 text-gray-700">
-          <li>
-            <strong>SpO₂:</strong>{" "}
-            {spo2 !== null ? `${spo2.toFixed(1)}%` : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Blood Pulse:</strong>{" "}
-            {bpm !== null ? `${bpm} BPM` : "Not yet recorded"}
-          </li>
-          <li>
-            <strong>Temp:</strong> Not yet recorded
-          </li>
-          <li>
-            <strong>Height:</strong> Not yet recorded
-          </li>
-          <li>
-            <strong>Weight:</strong> Not yet recorded
-          </li>
-        </ul>
-      </div>
+        {/* === Instructions === */}
+        <div className="mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 mb-10">
+          <h2 className="text-2xl font-bold text-[#1C7DA6] mb-4">
+            📋 Instructions
+          </h2>
+          <ol className="list-decimal list-inside space-y-2 text-[20px] text-[#3F3F3F]">
+            <li>Click the <strong>Record</strong> button below.</li>
+            <li>Place your index finger gently on the pulse sensor.</li>
+            <li>Stay still until the results appear on screen.</li>
+          </ol>
+        </div>
 
-      {/* Proceed to Step 2 */}
-      {status === "done" && (
+        {/* === Status Message === */}
+        {status !== "idle" && (
+          <div className="text-[22px] font-semibold text-[#3F3F3F] mb-10">
+            {message}{" "}
+            {countdown !== null && (
+              <span className="text-[#1C7DA6] font-bold">{countdown}</span>
+            )}
+          </div>
+        )}
+
+        {/* === Record Button === */}
         <button
-          onClick={handleProceed}
-          className="mt-6 px-6 py-3 rounded-md text-lg bg-green-600 hover:bg-green-700 text-white transition"
+          onClick={handleRecord}
+          disabled={status === "recording" || status === "countdown"}
+          className={`inline-flex w-[700px] min-h-[96px] items-center justify-center gap-5 rounded-full px-16 py-8 text-[28px] font-extrabold text-white shadow-md transition-all ${
+            status === "recording" || status === "countdown"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[#1C7DA6] hover:brightness-110"
+          }`}
         >
-          ➡️ Proceed to Step 2: Record Temperature
+          🔴{" "}
+          {status === "recording" ? "Recording..." : "Record SpO₂ and Blood Pulse"}
         </button>
-      )}
+
+        {/* === Results Summary === */}
+        <div className="mt-14 mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 text-[22px] text-[#3F3F3F]">
+          <h3 className="text-2xl font-bold text-[#1C7DA6] mb-4">
+            📊 Vitals Summary
+          </h3>
+          <ul className="space-y-3">
+            <li>
+              <strong>SpO₂:</strong>{" "}
+              {spo2 !== null ? `${spo2.toFixed(1)}%` : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Blood Pulse:</strong>{" "}
+              {bpm !== null ? `${bpm} BPM` : "Not yet recorded"}
+            </li>
+            <li>
+              <strong>Temperature:</strong> Not yet recorded
+            </li>
+            <li>
+              <strong>Height:</strong> Not yet recorded
+            </li>
+            <li>
+              <strong>Weight:</strong> Not yet recorded
+            </li>
+          </ul>
+        </div>
+
+        {/* === Proceed Button === */}
+        {status === "done" && (
+          <button
+            onClick={handleProceed}
+            className="mt-14 inline-flex w-[700px] min-h-[96px] items-center justify-center gap-5 rounded-full px-16 py-8 text-[28px] font-extrabold text-white shadow-md transition-all bg-green-600 hover:bg-green-700"
+          >
+            ➡️ Proceed to Step 2: Record Temperature
+          </button>
+        )}
+
+        {/* === Footer === */}
+        <p className="mt-14 text-[18px] text-[#3F3F3F]/50">
+          AI.V Health Monitor · 2025
+        </p>
+      </div>
     </div>
   );
 }
