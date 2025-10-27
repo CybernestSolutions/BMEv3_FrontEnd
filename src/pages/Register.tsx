@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", age: "", sex: "", email: "" });
@@ -8,42 +10,48 @@ export default function Register() {
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [bioDone, setBioDone] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
   const [bioMsg, setBioMsg] = useState("");
 
   const navigate = useNavigate();
   const API_BASE = "http://192.168.8.112:8000";
 
-  // === Handle form changes ===
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const notify = {
+    success: (msg: string) => toast.success(msg),
+    error: (msg: string) => toast.error(msg),
+    warn: (msg: string) => toast.warn(msg),
+  };
+
   // === Register API ===
   const handleRegister = async () => {
+    if (!form.name || !form.age || !form.sex || !form.email) {
+      notify.warn("⚠️ Please fill in all required fields.");
+      return;
+    }
+
     setRegistering(true);
     try {
       const res = await axios.post(`${API_BASE}/api/people/register`, form, {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (
-        (res.status === 200 || res.status === 201) &&
-        (res.data?.id || res.data?.person_id)
-      ) {
+      if ((res.status === 200 || res.status === 201) && (res.data?.id || res.data?.person_id)) {
         const id = res.data.id || res.data.person_id;
         setPersonId(id);
         setRegistered(true);
-        alert(`✅ Registration successful!\nPerson ID: ${id}`);
+        notify.success(`✅ Registration successful! Person ID: ${id}`);
       } else {
-        alert("⚠️ Unexpected response from server.");
+        notify.warn("⚠️ Unexpected response from server.");
       }
     } catch (err: any) {
       if (err?.response) {
-        alert(`❌ ${err.response.status} ${err.response.statusText}`);
+        notify.error(`❌ ${err.response.status} ${err.response.statusText}`);
       } else {
-        alert("❌ Failed to connect to server.");
+        notify.error("❌ Failed to connect to server.");
       }
     } finally {
       setRegistering(false);
@@ -69,131 +77,144 @@ export default function Register() {
       );
 
       if (res.status === 200 || res.status === 201) {
-        setBioMsg(
-          (prev) =>
-            prev + "\n\n✅ Fingerprint enrollment completed successfully!"
-        );
+        setBioMsg((prev) => prev + "\n\n✅ Fingerprint enrollment completed successfully!");
         setBioDone(true);
+        notify.success("✅ Fingerprint enrollment completed successfully!");
       } else {
-        setBioMsg(
-          (prev) => prev + `\n⚠️ Enrollment failed with status ${res.status}`
-        );
+        setBioMsg((prev) => prev + `\n⚠️ Enrollment failed with status ${res.status}`);
+        notify.warn("⚠️ Fingerprint enrollment failed. Try again.");
       }
     } catch (err: any) {
       if (err?.response) {
-        const details =
-          typeof err.response.data === "object"
-            ? JSON.stringify(err.response.data, null, 2)
-            : String(err.response.data);
-        setBioMsg(
-          `❌ ${err.response.status} ${err.response.statusText}\n${details}`
-        );
+        notify.error(`❌ ${err.response.status} ${err.response.statusText}`);
       } else {
-        setBioMsg("❌ Failed to connect to sensor or server.");
+        notify.error("❌ Failed to connect to sensor or server.");
       }
     }
   };
 
-  // === Redirect to Photo Capture ===
-  const handlePhotoCapture = () => {
-    navigate(`/photo/${personId}`);
-  };
+  const handlePhotoCapture = () => navigate(`/photo/${personId}`);
 
-  // === Render UI ===
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-center">
-      <h1 className="text-3xl font-bold mb-6">Register Person</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] relative">
+      {/* Toastify */}
+      <ToastContainer position="top-center" autoClose={3000} theme="colored" />
 
-      {/* === Form Section === */}
-      <div className="bg-white shadow-lg rounded-lg p-6 w-[90%] max-w-md text-left space-y-4">
-        <div>
-          <label className="block text-sm font-semibold mb-1">Name</label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          />
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-10 left-10 px-8 py-4 rounded-full text-2xl font-semibold bg-gray-200 text-[#1C7DA6] hover:bg-gray-300 transition-all shadow-sm"
+      >
+        ⬅ Back
+      </button>
+
+      {/* === Main Kiosk Card === */}
+      <div className="mx-auto w-[900px] h-[1500px] bg-white rounded-[28px] shadow-md flex flex-col items-center">
+        {/* === Header === */}
+        <div className="pt-20 pb-10 text-center">
+          <h1 className="text-[42px] font-extrabold text-[#1C7DA6] mb-2">
+            Registration Step 1
+          </h1>
+          <p className="text-[24px] text-gray-500">Information</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Age</label>
-          <input
-            type="number"
-            name="age"
-            value={form.age}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          />
-        </div>
+        {/* === Form Section === */}
+        <div className="flex-1 w-[700px] text-left space-y-10">
+          {/* Full Name */}
+          <div>
+            <label className="block text-[22px] font-semibold text-[#1C7DA6] mb-2">
+              Full Name
+            </label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Enter full name"
+              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Sex</label>
-          <select
-            name="sex"
-            value={form.sex}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          >
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </div>
+          {/* Age and Sex */}
+          <div className="flex gap-6">
+            <div className="w-1/2">
+              <label className="block text-[22px] font-semibold text-[#1C7DA6] mb-2">
+                Age
+              </label>
+              <input
+                type="number"
+                name="age"
+                value={form.age}
+                onChange={handleChange}
+                placeholder="e.g. 25"
+                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          />
+            <div className="w-1/2">
+              <label className="block text-[22px] font-semibold text-[#1C7DA6] mb-2">
+                Sex
+              </label>
+              <select
+                name="sex"
+                value={form.sex}
+                onChange={handleChange}
+                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+              >
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-[22px] font-semibold text-[#1C7DA6] mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="name@email.com"
+              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+            />
+          </div>
         </div>
 
         {/* === Buttons === */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-          {/* Register Button */}
+        <div className="pb-20 pt-16 flex flex-col items-center gap-8">
           <button
-            type="button"
             onClick={handleRegister}
             disabled={registering || registered}
-            className={`px-4 py-2 rounded text-white ${
+            className={`w-[700px] min-h-[96px] text-[28px] font-extrabold rounded-full text-white shadow-md transition-all ${
               registering || registered
-                ? "bg-gray-400"
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#1C7DA6] hover:brightness-110"
             }`}
           >
             {registering ? "Registering..." : "Register"}
           </button>
 
-          {/* Proceed to Biometrics */}
           <button
-            type="button"
             onClick={handleProceedToBio}
             disabled={!registered || !personId || bioDone}
-            className={`px-4 py-2 rounded text-white ${
+            className={`w-[700px] min-h-[96px] text-[28px] font-extrabold rounded-full text-white shadow-md transition-all ${
               !registered || !personId || bioDone
-                ? "bg-gray-400"
-                : "bg-green-600 hover:bg-green-700"
+                ? "bg-gray-300"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
             {bioDone ? "Biometrics Completed" : "Proceed to Biometrics"}
           </button>
 
-          {/* Capture Photo */}
           <button
-            type="button"
             onClick={handlePhotoCapture}
             disabled={!registered || !bioDone}
-            className={`px-4 py-2 rounded text-white ${
+            className={`w-[700px] min-h-[96px] text-[28px] font-extrabold rounded-full text-white shadow-md transition-all ${
               !registered || !bioDone
-                ? "bg-gray-400"
+                ? "bg-gray-300"
                 : "bg-purple-600 hover:bg-purple-700"
             }`}
           >
@@ -204,17 +225,17 @@ export default function Register() {
 
       {/* === Modal === */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-2xl p-8 w-[90%] max-w-md text-center">
-            <h3 className="text-2xl font-semibold mb-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+          <div className="bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] rounded-[32px] shadow-2xl w-[600px] p-10 text-center animate-fadeIn relative overflow-hidden">
+            <h2 className="text-[30px] font-extrabold text-[#1C7DA6] mb-6">
               Fingerprint Registration
-            </h3>
-            <pre className="text-gray-700 text-left whitespace-pre-wrap bg-gray-50 p-3 rounded-md border mb-6 max-h-80 overflow-y-auto">
+            </h2>
+            <pre className="text-[18px] text-gray-700 text-left whitespace-pre-wrap bg-white p-5 rounded-[20px] border border-[#D5E9ED] mb-8 max-h-[500px] overflow-y-auto">
               {bioMsg}
             </pre>
             <button
               onClick={() => setShowModal(false)}
-              className="bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition"
+              className="bg-[#1C7DA6] text-white px-12 py-4 rounded-full font-semibold text-[20px] hover:brightness-110 shadow-md transition"
             >
               Close
             </button>
