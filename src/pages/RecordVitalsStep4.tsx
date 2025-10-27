@@ -14,15 +14,26 @@ export default function RecordVitalsStep4() {
 
   const API_BASE = "http://192.168.8.112:8000";
 
-  // === Record weight (mock for now) ===
-  const handleRecordWeight = () => {
+  // === Record weight using HX711 API ===
+  const handleRecordWeight = async () => {
     setStatus("recording");
-    setMessage("⚖️ Measuring weight...");
-    setTimeout(() => {
-      setWeight(75); // Mock data
+    setMessage("⚖️ Measuring weight... Please stay still on the scale.");
+    setWeight(null);
+
+    try {
+      const response = await axios.get(`${API_BASE}/api/hx711/read/${person_id}`);
+      const data = response.data;
+
+      if (!data || !data.weight_kg) throw new Error("Invalid sensor response.");
+
+      setWeight(parseFloat(data.weight_kg.toFixed(2)));
       setStatus("done");
       setMessage("✅ Weight recorded successfully!");
-    }, 2000);
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+      setMessage("❌ Failed to record weight. Please try again.");
+    }
   };
 
   // === Compute BMI and BMR ===
@@ -31,12 +42,10 @@ export default function RecordVitalsStep4() {
 
     const height_m = prevVitals.height * 0.3048;
     const height_cm = height_m * 100;
-
     const bmi = weight / (height_m * height_m);
 
-    // Simple BMR formula (Mifflin-St Jeor, male, age = 25 for now)
+    // Mifflin-St Jeor Formula (assume male, age 25)
     const bmr = 66 + 13.7 * weight + 5 * height_cm - 6.8 * 25;
-
     return { bmi, bmr };
   };
 
@@ -89,9 +98,9 @@ export default function RecordVitalsStep4() {
       <div className="bg-white shadow-md rounded-lg p-6 text-left w-full max-w-md mb-6">
         <h2 className="text-xl font-semibold mb-3">📋 Instructions</h2>
         <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>WALA PA TO FILLER LANG TO WALA PAKO SENSOR (Stand on the weight scale).</li>
-          <li>Wait until the measurement completes.</li>
-          <li>Click <strong>Record Weight</strong> below to simulate measurement.</li>
+          <li>Step on the digital weight scale gently.</li>
+          <li>Wait until the reading stabilizes.</li>
+          <li>Click <strong>Record Weight</strong> to begin measurement.</li>
         </ol>
       </div>
 
@@ -135,7 +144,7 @@ export default function RecordVitalsStep4() {
           </li>
           <li>
             <strong>Weight:</strong>{" "}
-            {weight ? `${weight} kg` : "Not yet recorded"}
+            {weight ? `${weight.toFixed(2)} kg` : "Not yet recorded"}
           </li>
         </ul>
       </div>
