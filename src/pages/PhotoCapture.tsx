@@ -10,7 +10,7 @@ export default function PhotoCapture() {
   const [isCaptured, setIsCaptured] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = "http://192.168.8.167:8000";
+  const API_BASE = "http://192.168.8.112:8000";
 
   // === Capture photo ===
   const handleCapture = async () => {

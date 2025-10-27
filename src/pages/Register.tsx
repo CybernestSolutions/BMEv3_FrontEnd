@@ -13,7 +13,7 @@ export default function Register() {
   const [bioMsg, setBioMsg] = useState("");
 
   const navigate = useNavigate();
-  const API_BASE = "http://192.168.8.167:8000";
+  const API_BASE = "http://192.168.8.112:8000";
 
   // === Handle form changes ===
   const handleChange = (

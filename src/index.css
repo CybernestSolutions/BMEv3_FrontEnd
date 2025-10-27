@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background: linear-gradient(180deg, #eaf6ff 0%, #d1f4f7 100%);
+  font-family: "Inter", "Montserrat", sans-serif;
+}
+
+/* Card styling */
+.home-card {
+  box-shadow: 0 20px 40px rgba(0, 100, 200, 0.15);
+  border-radius: 28px;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+  transition: none !important;
+}
+
+/* Buttons */
+button {
+  transition: all 0.3s ease;
+}
+
+/* Fade-in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -14,5 +34,26 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s ease-in-out;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Responsive for portrait 1080x1920 */
+@media screen and (max-width: 1080px) and (orientation: portrait) {
+  .home-card {
+    max-width: 470px;
+    transform: scale(1.05);
+  }
+
+  .home-card img {
+    height: 400px;
+  }
+
+  .home-card h1 {
+    font-size: 1.9rem;
+  }
+
+  button {
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
 }

@@ -13,7 +13,7 @@ export default function RecordVitalsStep3() {
   const [height, setHeight] = useState<number | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
 
-  const API_BASE = "http://192.168.8.167:8000";
+  const API_BASE = "http://192.168.8.112:8000";
 
   // === handle countdown + record ===
   const handleRecord = async () => {

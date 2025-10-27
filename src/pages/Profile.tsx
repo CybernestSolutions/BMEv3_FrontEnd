@@ -20,7 +20,7 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
 
-  const API_BASE = "http://192.168.8.167:8000";
+  const API_BASE = "http://192.168.8.112:8000";
 
   useEffect(() => {
     const fetchPerson = async () => {

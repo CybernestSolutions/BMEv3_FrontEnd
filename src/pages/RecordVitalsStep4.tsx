@@ -12,7 +12,7 @@ export default function RecordVitalsStep4() {
   const [message, setMessage] = useState("");
   const [weight, setWeight] = useState<number | null>(null);
 
-  const API_BASE = "http://192.168.8.167:8000";
+  const API_BASE = "http://192.168.8.112:8000";
 
   // === Record weight (mock for now) ===
   const handleRecordWeight = () => {
