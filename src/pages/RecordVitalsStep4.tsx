@@ -1,7 +1,6 @@
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
 
 export default function RecordVitalsStep4() {
   const { person_id } = useParams();
@@ -15,23 +14,37 @@ export default function RecordVitalsStep4() {
 
   const API_BASE = "http://192.168.8.112:8000";
 
-  // === Simulated record ===
-  const handleRecordWeight = () => {
+  // === Record weight using HX711 API ===
+  const handleRecordWeight = async () => {
     setStatus("recording");
-    setMessage("⚖️ Measuring weight...");
-    setTimeout(() => {
-      setWeight(75); // mock data
+    setMessage("⚖️ Measuring weight... Please stay still on the scale.");
+    setWeight(null);
+
+    try {
+      const response = await axios.get(`${API_BASE}/api/hx711/read/${person_id}`);
+      const data = response.data;
+
+      if (!data || !data.weight_kg) throw new Error("Invalid sensor response.");
+
+      setWeight(parseFloat(data.weight_kg.toFixed(2)));
       setStatus("done");
       setMessage("✅ Weight recorded successfully!");
-    }, 2000);
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+      setMessage("❌ Failed to record weight. Please try again.");
+    }
   };
 
   // === Compute BMI and BMR ===
   const computeMetrics = () => {
     if (!prevVitals.height || !weight) return { bmi: null, bmr: null };
-    const height_m = prevVitals.height * 0.3048;
+
+    const height_m = prevVitals.height * 0.3048; // feet → meters
     const height_cm = height_m * 100;
     const bmi = weight / (height_m * height_m);
+
+    // Mifflin-St Jeor Formula (male, 25 yrs)
     const bmr = 66 + 13.7 * weight + 5 * height_cm - 6.8 * 25;
     return { bmi, bmr };
   };
@@ -42,7 +55,9 @@ export default function RecordVitalsStep4() {
       alert("Please record height and weight first!");
       return;
     }
+
     const { bmi, bmr } = computeMetrics();
+
     if (!bmi || !bmr) {
       alert("Failed to compute BMI/BMR. Please try again.");
       return;
@@ -54,6 +69,7 @@ export default function RecordVitalsStep4() {
         bmr: parseFloat(bmr.toFixed(2)),
         bmi: parseFloat(bmi.toFixed(2)),
       });
+
       setMessage("✅ Health metrics updated successfully!");
       navigate(`/record_vitals_step5/${person_id}`, {
         state: { ...prevVitals, weight, bmi, bmr },
@@ -65,24 +81,27 @@ export default function RecordVitalsStep4() {
     }
   };
 
+  // === UI ===
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] p-6">
-              <div className="absolute top-10 right-10">
-    <Link
-      to="/"
-      className=" text-xl inline-flex items-center gap-2  text-white font-semibold px-10 py-2 rounded-full shadow-md hover:brightness-110 transition-all"
-    >
-      🏠
-    </Link>
-  </div>
-  {/* === Back Button (Top Left) === */}
-<button
-  onClick={() => navigate(-1)}
-  className="absolute top-10 left-10 px-6 py-3 rounded-full text-lg font-semibold bg-gray-200 text-[#1C7DA6] hover:bg-gray-300 transition-all shadow-sm"
->
-  ⬅️ Back
-</button>
-      {/* === Card === */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] p-6 relative">
+      {/* === Home and Back Buttons === */}
+      <div className="absolute top-10 right-10">
+        <Link
+          to="/"
+          className="text-xl inline-flex items-center gap-2 text-white font-semibold px-10 py-2 rounded-full shadow-md hover:brightness-110 transition-all"
+        >
+          🏠
+        </Link>
+      </div>
+
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-10 left-10 px-6 py-3 rounded-full text-lg font-semibold bg-gray-200 text-[#1C7DA6] hover:bg-gray-300 transition-all shadow-sm"
+      >
+        ⬅️ Back
+      </button>
+
+      {/* === Main Kiosk Card === */}
       <div className="w-[900px] h-[1700px] rounded-[32px] bg-white shadow-2xl overflow-hidden text-center px-16 py-12">
         {/* === Header === */}
         <h1 className="text-[56px] font-extrabold text-[#1C7DA6] leading-tight tracking-tight mb-4">
@@ -93,7 +112,7 @@ export default function RecordVitalsStep4() {
           <span className="font-semibold text-[#1C7DA6]">{person_id}</span>
         </p>
 
-        {/* === Step Bar === */}
+        {/* === Step Progress === */}
         <div className="flex justify-center items-center gap-8 mb-10">
           {[
             { icon: "🩸", label: "Vitals" },
@@ -129,17 +148,27 @@ export default function RecordVitalsStep4() {
 
         {/* === Instructions === */}
         <div className="mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 mb-10">
-          <h2 className="text-2xl font-bold text-[#1C7DA6] mb-4">📋 Instructions</h2>
+          <h2 className="text-2xl font-bold text-[#1C7DA6] mb-4">
+            📋 Instructions
+          </h2>
           <ol className="list-decimal list-inside space-y-2 text-[20px] text-[#3F3F3F]">
-            <li>Stand on the weight scale evenly with both feet.</li>
-            <li>Wait until the measurement completes.</li>
-            <li>Click <strong>Record Weight</strong> to simulate measurement.</li>
+            <li>Step on the digital weight scale evenly with both feet.</li>
+            <li>Wait until the reading stabilizes.</li>
+            <li>Click <strong>Record Weight</strong> to begin measurement.</li>
           </ol>
         </div>
 
         {/* === Status Message === */}
         {message && (
-          <div className="text-[22px] font-semibold text-[#3F3F3F] mb-10">
+          <div
+            className={`text-[22px] font-semibold mb-10 ${
+              status === "error"
+                ? "text-red-600"
+                : status === "done"
+                ? "text-green-600"
+                : "text-[#3F3F3F]"
+            }`}
+          >
             {message}
           </div>
         )}
@@ -157,9 +186,11 @@ export default function RecordVitalsStep4() {
           ⚖️ {status === "recording" ? "Recording..." : "Record Weight"}
         </button>
 
-        {/* === Summary === */}
+        {/* === Summary Section === */}
         <div className="mt-14 mx-auto max-w-[700px] bg-[#F5F7FA] rounded-3xl shadow-inner text-left p-10 text-[22px] text-[#3F3F3F]">
-          <h3 className="text-2xl font-bold text-[#1C7DA6] mb-4">📊 Vitals Summary</h3>
+          <h3 className="text-2xl font-bold text-[#1C7DA6] mb-4">
+            📊 Vitals Summary
+          </h3>
           <ul className="space-y-3">
             <li>
               <strong>SpO₂:</strong>{" "}
@@ -185,7 +216,7 @@ export default function RecordVitalsStep4() {
             </li>
             <li>
               <strong>Weight:</strong>{" "}
-              {weight ? `${weight} kg` : "Not yet recorded"}
+              {weight ? `${weight.toFixed(2)} kg` : "Not yet recorded"}
             </li>
           </ul>
         </div>

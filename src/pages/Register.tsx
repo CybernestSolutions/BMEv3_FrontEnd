@@ -1,8 +1,13 @@
+// -------------------------------------------------------------
+// src/pages/Register.tsx
+// With custom on-screen keyboard for kiosk use
+// -------------------------------------------------------------
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import OnScreenKeyboard from "@/components/OnScreenKeyboard";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", age: "", sex: "", email: "" });
@@ -12,19 +17,33 @@ export default function Register() {
   const [bioDone, setBioDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bioMsg, setBioMsg] = useState("");
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeField, setActiveField] = useState("");
+  const [keyboardValue, setKeyboardValue] = useState("");
 
   const navigate = useNavigate();
   const API_BASE = "http://192.168.8.112:8000";
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const notify = {
     success: (msg: string) => toast.success(msg),
     error: (msg: string) => toast.error(msg),
     warn: (msg: string) => toast.warn(msg),
   };
+
+  const handleFocus = (field: string, value: string) => {
+    setActiveField(field);
+    setKeyboardValue(value);
+    setShowKeyboard(true);
+  };
+
+  const handleKeyboardInput = (val: string) => {
+    setKeyboardValue(val);
+    setForm({ ...form, [activeField]: val });
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => setForm({ ...form, [e.target.name]: e.target.value });
 
   // === Register API ===
   const handleRegister = async () => {
@@ -39,7 +58,10 @@ export default function Register() {
         headers: { "Content-Type": "application/json" },
       });
 
-      if ((res.status === 200 || res.status === 201) && (res.data?.id || res.data?.person_id)) {
+      if (
+        (res.status === 200 || res.status === 201) &&
+        (res.data?.id || res.data?.person_id)
+      ) {
         const id = res.data.id || res.data.person_id;
         setPersonId(id);
         setRegistered(true);
@@ -48,11 +70,9 @@ export default function Register() {
         notify.warn("⚠️ Unexpected response from server.");
       }
     } catch (err: any) {
-      if (err?.response) {
+      if (err?.response)
         notify.error(`❌ ${err.response.status} ${err.response.statusText}`);
-      } else {
-        notify.error("❌ Failed to connect to server.");
-      }
+      else notify.error("❌ Failed to connect to server.");
     } finally {
       setRegistering(false);
     }
@@ -77,19 +97,21 @@ export default function Register() {
       );
 
       if (res.status === 200 || res.status === 201) {
-        setBioMsg((prev) => prev + "\n\n✅ Fingerprint enrollment completed successfully!");
+        setBioMsg(
+          (prev) => prev + "\n\n✅ Fingerprint enrollment completed successfully!"
+        );
         setBioDone(true);
         notify.success("✅ Fingerprint enrollment completed successfully!");
       } else {
-        setBioMsg((prev) => prev + `\n⚠️ Enrollment failed with status ${res.status}`);
+        setBioMsg(
+          (prev) => prev + `\n⚠️ Enrollment failed with status ${res.status}`
+        );
         notify.warn("⚠️ Fingerprint enrollment failed. Try again.");
       }
     } catch (err: any) {
-      if (err?.response) {
+      if (err?.response)
         notify.error(`❌ ${err.response.status} ${err.response.statusText}`);
-      } else {
-        notify.error("❌ Failed to connect to sensor or server.");
-      }
+      else notify.error("❌ Failed to connect to sensor or server.");
     }
   };
 
@@ -97,7 +119,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] relative">
-      {/* Toastify */}
       <ToastContainer position="top-center" autoClose={3000} theme="colored" />
 
       {/* Back Button */}
@@ -108,9 +129,9 @@ export default function Register() {
         ⬅ Back
       </button>
 
-      {/* === Main Kiosk Card === */}
+      {/* === Main Card === */}
       <div className="mx-auto w-[900px] h-[1500px] bg-white rounded-[28px] shadow-md flex flex-col items-center">
-        {/* === Header === */}
+        {/* Header */}
         <div className="pt-20 pb-10 text-center">
           <h1 className="text-[42px] font-extrabold text-[#1C7DA6] mb-2">
             Registration Step 1
@@ -118,7 +139,7 @@ export default function Register() {
           <p className="text-[24px] text-gray-500">Information</p>
         </div>
 
-        {/* === Form Section === */}
+        {/* Form */}
         <div className="flex-1 w-[700px] text-left space-y-10">
           {/* Full Name */}
           <div>
@@ -128,25 +149,27 @@ export default function Register() {
             <input
               name="name"
               value={form.name}
-              onChange={handleChange}
+              onFocus={() => handleFocus("name", form.name)}
+              readOnly
               placeholder="Enter full name"
-              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none bg-white"
             />
           </div>
 
-          {/* Age and Sex */}
+          {/* Age + Sex */}
           <div className="flex gap-6">
             <div className="w-1/2">
               <label className="block text-[22px] font-semibold text-[#1C7DA6] mb-2">
                 Age
               </label>
               <input
-                type="number"
+                type="text"
                 name="age"
                 value={form.age}
-                onChange={handleChange}
+                onFocus={() => handleFocus("age", form.age)}
+                readOnly
                 placeholder="e.g. 25"
-                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none bg-white"
               />
             </div>
 
@@ -158,7 +181,7 @@ export default function Register() {
                 name="sex"
                 value={form.sex}
                 onChange={handleChange}
-                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+                className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none bg-white"
               >
                 <option value="">Select</option>
                 <option value="male">Male</option>
@@ -173,17 +196,18 @@ export default function Register() {
               Email
             </label>
             <input
-              type="email"
+              type="text"
               name="email"
               value={form.email}
-              onChange={handleChange}
+              onFocus={() => handleFocus("email", form.email)}
+              readOnly
               placeholder="name@email.com"
-              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none"
+              className="w-full border border-[#C6E4EA] focus:border-[#1C7DA6] px-6 py-6 rounded-[14px] text-[22px] outline-none bg-white"
             />
           </div>
         </div>
 
-        {/* === Buttons === */}
+        {/* Buttons */}
         <div className="pb-20 pt-16 flex flex-col items-center gap-8">
           <button
             onClick={handleRegister}
@@ -223,7 +247,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* === Modal === */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
           <div className="bg-gradient-to-b from-[#eaf6ff] to-[#d1f4f7] rounded-[32px] shadow-2xl w-[600px] p-10 text-center animate-fadeIn relative overflow-hidden">
@@ -241,6 +265,16 @@ export default function Register() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* On-Screen Keyboard */}
+      {showKeyboard && (
+        <OnScreenKeyboard
+          value={keyboardValue}
+          onInput={handleKeyboardInput}
+          onClose={() => setShowKeyboard(false)}
+          mode={activeField === "age" ? "number" : "text"}
+        />
       )}
     </div>
   );
