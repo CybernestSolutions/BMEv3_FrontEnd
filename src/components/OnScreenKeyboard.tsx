@@ -1,14 +1,14 @@
 // -------------------------------------------------------------
 // src/components/OnScreenKeyboard.tsx
-// Elegant kiosk keyboard with .com, Shift, and smooth animation
+// Elegant kiosk keyboard with .com, Shift, numbers, and animation
 // -------------------------------------------------------------
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Props {
   value: string;
   onInput: (newValue: string) => void;
   onClose: () => void;
-  mode?: "text" | "number";
+  mode?: "text" | "number" | "email"; // added "email"
 }
 
 export default function OnScreenKeyboard({
@@ -19,10 +19,18 @@ export default function OnScreenKeyboard({
 }: Props) {
   const [isShift, setIsShift] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [keyboardType, setKeyboardType] = useState(mode);
+
+  // Auto-detect email input fields if value includes @
+  useEffect(() => {
+    if (value.includes("@") && keyboardType !== "email") {
+      setKeyboardType("email");
+    }
+  }, [value]);
 
   // === Layout definitions ===
   const layout =
-    mode === "number"
+    keyboardType === "number"
       ? [
           ["1", "2", "3"],
           ["4", "5", "6"],
@@ -30,6 +38,7 @@ export default function OnScreenKeyboard({
           ["0", "←", "Clear"],
         ]
       : [
+          ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
           ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "@"],
           ["a", "s", "d", "f", "g", "h", "j", "k", "l", "."],
           ["Shift", "z", "x", "c", "v", "b", "n", "m", ".com"],
@@ -56,7 +65,11 @@ export default function OnScreenKeyboard({
   };
 
   return (
-    <div className="fixed inset-0  z-[9998] flex flex-col justify-end">
+    <div
+      className={`fixed inset-0 z-[9998] flex flex-col justify-end transition-all duration-300 ${
+        isClosing ? "opacity-0" : "opacity-100"
+      }`}
+    >
       {/* Clicking outside closes */}
       <div
         className="flex-1"
@@ -66,8 +79,9 @@ export default function OnScreenKeyboard({
 
       {/* === Keyboard Container === */}
       <div
-        className={`inset-x-0 bottom-0 bg-white border-t border-[#C6E4EA] shadow-2xl px-4 py-5 md:px-8 rounded-t-[24px] 
-        ${isClosing ? "animate-slideDownFade" : "animate-slideUpFade"}`}
+        className={`inset-x-0 bottom-0 bg-white border-t border-[#C6E4EA] shadow-2xl px-4 py-5 md:px-8 rounded-t-[24px] transform transition-all duration-300 ${
+          isClosing ? "translate-y-full opacity-0" : "translate-y-0 opacity-100"
+        }`}
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
