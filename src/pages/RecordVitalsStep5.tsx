@@ -186,9 +186,12 @@ export default function RecordVitalsStep5() {
             <h3 className="text-2xl font-bold text-[#1C7DA6] mb-4">
               🧠 AI Health Analysis
             </h3>
-            <pre className="whitespace-pre-wrap text-[18px] leading-relaxed">
-              {aiResult}
-            </pre>
+  <pre
+  className="whitespace-pre-wrap text-[18px] leading-relaxed max-h-[300px] overflow-y-auto px-3 py-2 rounded-lg border border-gray-200 bg-[#F9FAFB] scroll-smooth"
+>
+  {aiResult}
+</pre>
+
             {disclaimer && (
               <p className="mt-6 text-xs text-[#3F3F3F]/60 italic border-t pt-3">
                 {disclaimer}
